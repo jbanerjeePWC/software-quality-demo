@@ -30,4 +30,4 @@ def average(numbers):
 
 def apply_discount(price, percent):
     """Return price reduced by percent (20 means 20% off)."""
-    return price * (1 - percent / 100)
+    return price * (1 - percent / 10)

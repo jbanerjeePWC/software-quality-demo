@@ -1,46 +1,49 @@
-# Branch `pytest-basic`
+# Branch `pytest-failing`
 
-Adds test_calculator.py: plain asserts, pytest.raises, parametrize and pytest.approx.
-All 10 tests pass.
+One commit introduces a bug in apply_discount (`percent / 10` instead of `percent / 100`).
+The three parametrized discount tests fail; the other seven still pass.
 
-- Parent branch: `pytest-none`
+- Parent branch: `pytest-basic`
 - Used in: Video 2 - pytest basics
 
 ## Commands
 
 ```powershell
-pip install -r requirements-dev.txt
+git diff pytest-basic pytest-failing -- calculator.py
 python -m pytest -q --no-header
-python -m pytest -v --no-header
 ```
 
 ## Expected output
 
-`python -m pytest -q --no-header` (exit code 0):
+Exit code 1. Exactly 3 tests fail, all of them `test_apply_discount[...]`.
+Excerpt:
 
 ```text
-..........                                                               [100%]
-10 passed in 0.05s
-```
+_______________________ test_apply_discount[100-10-90] ________________________
 
-`python -m pytest -v --no-header`:
+price = 100, percent = 10, expected = 90
 
-```text
-============================= test session starts =============================
-collecting ... collected 10 items
+    @pytest.mark.parametrize(
+        ("price", "percent", "expected"),
+        [
+            (100, 10, 90),
+            (80, 25, 60),
+            (200, 50, 100),
+        ],
+    )
+    def test_apply_discount(price, percent, expected):
+>       assert apply_discount(price, percent) == expected
+E       assert 0.0 == 90
+E        +  where 0.0 = apply_discount(100, 10)
 
-test_calculator.py::test_add_two_positive_numbers PASSED                 [ 10%]
-test_calculator.py::test_add_negative_and_positive_number PASSED         [ 20%]
-test_calculator.py::test_divide_two_numbers PASSED                       [ 30%]
-test_calculator.py::test_divide_by_zero_raises_error PASSED              [ 40%]
-test_calculator.py::test_average_of_three_numbers PASSED                 [ 50%]
-test_calculator.py::test_average_of_floats_is_approximately_correct PASSED [ 60%]
-test_calculator.py::test_average_of_empty_list_raises_error PASSED       [ 70%]
-test_calculator.py::test_apply_discount[100-10-90] PASSED                [ 80%]
-test_calculator.py::test_apply_discount[80-25-60] PASSED                 [ 90%]
-test_calculator.py::test_apply_discount[200-50-100] PASSED               [100%]
+test_calculator.py:47: AssertionError
 
-============================= 10 passed in 0.03s ==============================
+(two more failure blocks of the same shape)
+
+FAILED test_calculator.py::test_apply_discount[100-10-90] - assert 0.0 == 90
+FAILED test_calculator.py::test_apply_discount[80-25-60] - assert -120.0 == 60
+FAILED test_calculator.py::test_apply_discount[200-50-100] - assert -800.0 ==...
+3 failed, 7 passed in 0.15s
 ```
 
 Timings (`in 0.35s`) and object addresses vary from run to run.
