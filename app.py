@@ -1,4 +1,3 @@
-"""Flask web app that predicts a handwritten digit from an uploaded image."""
 from flask import Flask, render_template, request
 
 from model import preprocess_img, predict_result
