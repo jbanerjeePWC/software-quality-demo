@@ -22,5 +22,5 @@ def prediction():
         batch = preprocess_img(file.stream)
         digit = predict_result(batch)
         return render_template("result.html", prediction=digit)
-    except:
+    except (KeyError, OSError, ValueError):
         print("error")
