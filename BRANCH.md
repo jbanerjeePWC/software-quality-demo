@@ -1,98 +1,86 @@
-# Branch `precommit-bad`
+# Branch `precommit-fixed`
 
-Adds messy files (trailing spaces, missing final newline, broken YAML) and no
-.pre-commit-config.yaml. app.py and model.py stay clean (pylint 10.00/10).
+Adds .pre-commit-config.yaml (trailing-whitespace, end-of-file-fixer, check-yaml,
+local pylint hook) and cleans the three messy files. All four hooks pass.
 
-- Parent branch: `app-mini`
+- Parent branch: `precommit-bad`
 - Used in: Video 4 - pre-commit hooks
-
-## Messy files
-
-| File | Problem |
-| --- | --- |
-| `docs/notes.md` | three lines end with trailing spaces; no final newline |
-| `config/defaults.yaml` | valid YAML, trailing whitespace on two lines |
-| `config/settings.yaml` | broken YAML: the `[png, jpg, jpeg` list is never closed |
 
 ## Commands
 
-Copy the config from the fixed branch without committing it, then run the hooks:
-
 ```powershell
 pip install -r requirements-dev.txt
-git show precommit-fixed:.pre-commit-config.yaml > .pre-commit-config.yaml
-pre-commit run --all-files
-git status --short
+pre-commit install
 pre-commit run --all-files
 ```
 
-(In Windows PowerShell 5.1, `>` writes UTF-16; use
-`git show precommit-fixed:.pre-commit-config.yaml | Set-Content -Encoding utf8 .pre-commit-config.yaml`
-or check out the file with `git checkout precommit-fixed -- .pre-commit-config.yaml`
-followed by `git reset .pre-commit-config.yaml`.)
+Then show the hook blocking a commit:
+
+```powershell
+Add-Content docs/notes.md "Added during the demo.   "
+git add docs/notes.md
+git commit -m "Update notes"
+git status --short
+git diff
+```
 
 ## Expected output
 
-First run (exit code 1; downloads and installs the hook repo, about
-36 seconds the first time):
+`pre-commit install`:
 
 ```text
-[INFO] Initializing environment for https://github.com/pre-commit/pre-commit-hooks.
-[WARNING] repo `https://github.com/pre-commit/pre-commit-hooks` uses deprecated stage names (commit, push) which will be removed in a future version.  Hint: often `pre-commit autoupdate --repo https://github.com/pre-commit/pre-commit-hooks` will fix this.  if it does not -- consider reporting an issue to that repo.
-[INFO] Installing environment for https://github.com/pre-commit/pre-commit-hooks.
-[INFO] Once installed this environment will be reused.
-[INFO] This may take a few minutes...
+pre-commit installed at .git\hooks\pre-commit
+```
+
+`pre-commit run --all-files` (exit code 0):
+
+```text
+Trim Trailing Whitespace.................................................Passed
+Fix End of Files.........................................................Passed
+Check Yaml...............................................................Passed
+Pylint application files.................................................Passed
+```
+
+`git commit -m "Update notes"` with a trailing-whitespace line staged (exit code
+1; the commit is blocked):
+
+```text
 Trim Trailing Whitespace.................................................Failed
 - hook id: trailing-whitespace
 - exit code: 1
 - files were modified by this hook
 
-Fixing config/defaults.yaml
 Fixing docs/notes.md
 
-Fix End of Files.........................................................Failed
-- hook id: end-of-file-fixer
-- exit code: 1
-- files were modified by this hook
-
-Fixing docs/notes.md
-
-Check Yaml...............................................................Failed
-- hook id: check-yaml
-- exit code: 1
-
-while parsing a flow sequence
-  in "config/settings.yaml", line 4, column 23
-expected ',' or ']', but got ':'
-  in "config/settings.yaml", line 5, column 7
-
-Pylint application files.................................................Passed
-```
-
-Failing hooks on the first run: trailing-whitespace, end-of-file-fixer, check-yaml. Pylint passes.
-
-`git status --short` afterwards:
-
-```text
- M config/defaults.yaml
- M docs/notes.md
-?? .pre-commit-config.yaml
-```
-
-Second run (exit code 1): the auto-fixable problems are gone, check-yaml
-still fails because broken YAML cannot be fixed automatically:
-
-```text
-Trim Trailing Whitespace.................................................Passed
 Fix End of Files.........................................................Passed
-Check Yaml...............................................................Failed
-- hook id: check-yaml
-- exit code: 1
-
-while parsing a flow sequence
-  in "config/settings.yaml", line 4, column 23
-expected ',' or ']', but got ':'
-  in "config/settings.yaml", line 5, column 7
-
+Check Yaml...........................................(no files to check)Skipped
 Pylint application files.................................................Passed
 ```
+
+`git status --short` (staged version still has the spaces, working copy was fixed):
+
+```text
+MM docs/notes.md
+```
+
+`git diff` (trailing spaces shown as `·`):
+
+```diff
+diff --git a/docs/notes.md b/docs/notes.md
+index 23adb18..1434c3a 100644
+--- a/docs/notes.md
++++ b/docs/notes.md
+@@ -4,4 +4,4 @@ Some lines end with invisible spaces.
+ The app predicts a digit from an uploaded image.
+ Run pylint before every commit.
+ Nobody remembered the final newline.
+-Added during the demo.···
++Added during the demo.
+```
+
+`git add docs/notes.md` and `git commit` again then succeed.
+
+Note: pre-commit 4.x prints
+`[WARNING] repo https://github.com/pre-commit/pre-commit-hooks uses deprecated stage names`
+the first time it installs pre-commit-hooks v3.4.0. The hooks still work; `pre-commit autoupdate`
+would remove the warning but changes the pinned `rev`.

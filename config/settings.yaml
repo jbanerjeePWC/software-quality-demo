@@ -1,5 +1,5 @@
 # Local overrides for the demo app
 app:
   name: digit-demo
-  allowed_extensions: [png, jpg, jpeg
+  allowed_extensions: [png, jpg, jpeg]
   port: 9000
