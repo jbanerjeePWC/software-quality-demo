@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Prediction</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <h1>Prediction</h1>
+  {% if prediction is defined %}
+  <p class="result">Predicted digit: {{ prediction }}</p>
+  {% else %}
+  <p class="error">{{ error }}</p>
+  {% endif %}
+  <p><a href="/">Try another image</a></p>
+</body>
+</html>

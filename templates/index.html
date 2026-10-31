@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Digit recognizer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <h1>Digit recognizer</h1>
+  <p>Upload an image of a handwritten digit.</p>
+  <form action="/prediction" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" accept="image/*">
+    <button type="submit">Predict</button>
+  </form>
+</body>
+</html>
