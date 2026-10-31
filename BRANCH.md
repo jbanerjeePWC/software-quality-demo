@@ -1,46 +1,49 @@
-# Branch `lint-bad`
+# Branch `lint-fixed`
 
-Starting from app-mini, docstrings are removed and the except clause is made bare and
-falls through. Pylint reports exactly eight messages.
+Fixes every lint-bad message in three small commits, back to 10.00/10.
+The final app.py and model.py are identical to app-mini.
 
-- Parent branch: `app-mini`
+- Parent branch: `lint-bad`
 - Used in: Video 3 - Linting with pylint
+
+## Commits
+
+1. `Setup: add module and function docstrings to address pylint`
+2. `Setup: Removed bare exception` (bare `except:` becomes `except (KeyError, OSError, ValueError):`)
+3. `Setup: Ensured return from all paths` (the except branch returns the error page)
 
 ## Commands
 
 ```powershell
-pip install -r requirements-dev.txt
+git log --oneline lint-bad..lint-fixed
+git diff lint-bad lint-fixed -- app.py model.py
+git checkout lint-fixed~2
 python -m pylint app.py model.py
+git checkout lint-fixed~1
+python -m pylint app.py model.py
+git checkout lint-fixed
+python -m pylint app.py model.py
+git diff app-mini lint-fixed -- app.py model.py      # empty
 ```
 
-## Expected output
+## Score ladder (verified after each commit)
 
-Exit code 28 (pylint's bit flags: 4 warning + 8 refactor + 16 convention).
+| Step | Commit | Score | Exit code | Remaining messages |
+| --- | --- | --- | --- | --- |
+| start | lint-bad | 7.84/10 | 28 | 8 messages (see lint-bad) |
+| 1 | add docstrings | 9.46/10 | 12 | `W0702`<br>`R1710` |
+| 2 | removed bare exception | 9.73/10 | 8 | `R1710` |
+| 3 | return from all paths | 10.00/10 | 0 | none |
+
+Final pylint output:
 
 ```text
-************* Module app
-app.py:1:0: C0114: Missing module docstring (missing-module-docstring)
-app.py:9:0: C0116: Missing function or method docstring (missing-function-docstring)
-app.py:14:0: C0116: Missing function or method docstring (missing-function-docstring)
-app.py:22:4: W0702: No exception type(s) specified (bare-except)
-app.py:14:0: R1710: Either all return statements in a function should return an expression, or none of them should. (inconsistent-return-statements)
-************* Module model
-model.py:1:0: C0114: Missing module docstring (missing-module-docstring)
-model.py:31:0: C0116: Missing function or method docstring (missing-function-docstring)
-model.py:38:0: C0116: Missing function or method docstring (missing-function-docstring)
-
 -------------------------------------------------------------------
-Your code has been rated at 7.84/10 (previous run: 10.00/10, -2.16)
+Your code has been rated at 10.00/10 (previous run: 9.73/10, +0.27)
 ```
 
 The `(previous run: ...)` part of pylint's score line depends on your local pylint
 history and will differ; the messages and the score itself are fixed.
 
-| Message | Count | Where |
-| --- | --- | --- |
-| C0114 missing-module-docstring | 2 | app.py, model.py |
-| C0116 missing-function-docstring | 4 | home, prediction, preprocess_img, predict_result |
-| W0702 bare-except | 1 | prediction |
-| R1710 inconsistent-return-statements | 1 | prediction (the except branch only prints) |
-
-Score: 10 - 10 x (8 messages / 37 statements) = 7.84.
+`git diff --exit-code app-mini lint-fixed -- app.py model.py` prints nothing and exits
+0. Only BRANCH.md differs between app-mini and lint-fixed.
