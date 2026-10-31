@@ -1,79 +1,98 @@
-# Branch `app-mini`
+# Branch `precommit-bad`
 
-A tiny Flask digit-recognition app with the same structure as the student assignment,
-using a fake, deterministic numpy model (no TensorFlow). Pylint 10.00/10.
+Adds messy files (trailing spaces, missing final newline, broken YAML) and no
+.pre-commit-config.yaml. app.py and model.py stay clean (pylint 10.00/10).
 
-- Parent branch: `main`
-- Used in: Base branch for videos 3-6 (pylint, pre-commit, better tests, CI)
+- Parent branch: `app-mini`
+- Used in: Video 4 - pre-commit hooks
 
-## Layout
+## Messy files
 
-| Path | Purpose |
+| File | Problem |
 | --- | --- |
-| `app.py` | Flask app: `GET /` (`home`) and `POST /prediction` (`prediction`) |
-| `model.py` | `FakeDigitModel`, `preprocess_img`, `predict_result` |
-| `templates/` | `index.html` (upload form), `result.html` (always has the heading "Prediction") |
-| `static/style.css` | styling |
-| `test_images/` | `digit_2.png`, `digit_7.png` (uniform gray, made by `tools/make_test_images.py`) |
-| `.pylintrc` | py-version 3.10, max line length 100, snake_case names, fail-under 10 |
-
-The fake model predicts `min(9, int(mean_brightness * 10))`. The test images have gray levels
-`round(digit * 25.5 + 13)`, i.e. 64 and 192.
-
-Note: `prediction()` catches only `(KeyError, OSError, ValueError)`. `RuntimeError` is
-deliberately not caught (see the `ci-test-fail` branch).
+| `docs/notes.md` | three lines end with trailing spaces; no final newline |
+| `config/defaults.yaml` | valid YAML, trailing whitespace on two lines |
+| `config/settings.yaml` | broken YAML: the `[png, jpg, jpeg` list is never closed |
 
 ## Commands
 
+Copy the config from the fixed branch without committing it, then run the hooks:
+
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt
-python -m pylint app.py model.py
-python -m flask --app app.py run --debugger --port 9000
+git show precommit-fixed:.pre-commit-config.yaml > .pre-commit-config.yaml
+pre-commit run --all-files
+git status --short
+pre-commit run --all-files
 ```
 
-Then open http://127.0.0.1:9000/ and upload `test_images/digit_2.png` or `digit_7.png`.
+(In Windows PowerShell 5.1, `>` writes UTF-16; use
+`git show precommit-fixed:.pre-commit-config.yaml | Set-Content -Encoding utf8 .pre-commit-config.yaml`
+or check out the file with `git checkout precommit-fixed -- .pre-commit-config.yaml`
+followed by `git reset .pre-commit-config.yaml`.)
 
 ## Expected output
 
-`python -m pylint app.py model.py` (exit code 0):
+First run (exit code 1; downloads and installs the hook repo, about
+36 seconds the first time):
 
 ```text
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+[INFO] Initializing environment for https://github.com/pre-commit/pre-commit-hooks.
+[WARNING] repo `https://github.com/pre-commit/pre-commit-hooks` uses deprecated stage names (commit, push) which will be removed in a future version.  Hint: often `pre-commit autoupdate --repo https://github.com/pre-commit/pre-commit-hooks` will fix this.  if it does not -- consider reporting an issue to that repo.
+[INFO] Installing environment for https://github.com/pre-commit/pre-commit-hooks.
+[INFO] Once installed this environment will be reused.
+[INFO] This may take a few minutes...
+Trim Trailing Whitespace.................................................Failed
+- hook id: trailing-whitespace
+- exit code: 1
+- files were modified by this hook
+
+Fixing config/defaults.yaml
+Fixing docs/notes.md
+
+Fix End of Files.........................................................Failed
+- hook id: end-of-file-fixer
+- exit code: 1
+- files were modified by this hook
+
+Fixing docs/notes.md
+
+Check Yaml...............................................................Failed
+- hook id: check-yaml
+- exit code: 1
+
+while parsing a flow sequence
+  in "config/settings.yaml", line 4, column 23
+expected ',' or ']', but got ':'
+  in "config/settings.yaml", line 5, column 7
+
+Pylint application files.................................................Passed
 ```
 
-The `(previous run: ...)` part of pylint's score line depends on your local pylint
-history and will differ; the messages and the score itself are fixed.
+Failing hooks on the first run: trailing-whitespace, end-of-file-fixer, check-yaml. Pylint passes.
 
-Server start:
+`git status --short` afterwards:
 
 ```text
- * Serving Flask app 'app.py'
- * Debug mode: off
-WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
- * Running on http://127.0.0.1:9000
-Press CTRL+C to quit
+ M config/defaults.yaml
+ M docs/notes.md
+?? .pre-commit-config.yaml
 ```
 
-Route checks (Flask test client; the same results were seen with `curl` against the running
-server):
+Second run (exit code 1): the auto-fixable problems are gone, check-yaml
+still fails because broken YAML cannot be fixed automatically:
 
 ```text
-predict_result(preprocess_img('test_images/digit_2.png')) -> 2
-predict_result(preprocess_img('test_images/digit_7.png')) -> 7
-GET / -> 200 []
-POST /prediction digit_2.png -> 200 ['Predicted digit: 2']
-POST /prediction digit_7.png -> 200 ['Predicted digit: 7']
-POST /prediction (no file field) -> 200 ['Could not process the image']
-POST /prediction (empty filename) -> 200 ['No file selected']
-POST /prediction (text file) -> 200 ['Could not process the image']
-```
+Trim Trailing Whitespace.................................................Passed
+Fix End of Files.........................................................Passed
+Check Yaml...............................................................Failed
+- hook id: check-yaml
+- exit code: 1
 
-`python tools/make_test_images.py` regenerates identical PNGs:
+while parsing a flow sequence
+  in "config/settings.yaml", line 4, column 23
+expected ',' or ']', but got ':'
+  in "config/settings.yaml", line 5, column 7
 
-```text
-wrote digit_2.png (gray level 64)
-wrote digit_7.png (gray level 192)
+Pylint application files.................................................Passed
 ```

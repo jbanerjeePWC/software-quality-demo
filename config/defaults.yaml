@@ -1,0 +1,7 @@
+# Default settings for the demo app
+app:
+  name: digit-demo   
+  port: 9000
+  debug: false  
+upload:
+  max_size_mb: 5
